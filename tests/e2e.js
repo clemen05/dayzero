@@ -21,12 +21,12 @@ const check = (id, ok, info = '') => { results.push({ id, ok: !!ok, info }); };
   const text = async (sel) => (await page.locator(sel).first().innerText()).trim();
 
   // HU-01 esc. 2: misma ciudad
-  await page.selectOption('#origen', 'MAD'); await page.selectOption('#destino', 'MAD');
+  await page.check('#origen-MAD', { force: true }); await page.check('#destino-MAD', { force: true });
   await page.click('button[type=submit]');
   check('HU-01 esc.2 aviso misma ciudad', (await page.locator('.err').innerText()).includes('Elige dos ciudades distintas'));
   check('HU-01 esc.2 no avanza', await page.locator('[data-paso=inicio]').count() === 1);
   // HU-01 esc. 1
-  await page.selectOption('#destino', 'LON'); await page.click('button[type=submit]');
+  await page.check('#destino-LON', { force: true }); await page.click('button[type=submit]');
   check('HU-01 esc.1 pasa a sueldo', await page.locator('[data-paso=sueldo]').count() === 1);
   const route = await text('.route');
   check('HU-01 esc.1 ciudades arriba', route.includes('Madrid') && route.includes('Londres'), route.replace(/\s+/g, ' '));
@@ -98,7 +98,7 @@ const check = (id, ok, info = '') => { results.push({ id, ok: !!ok, info }); };
   check('HU-04 esc.1 datos conservados', (await page.evaluate(() => window.DZ_STATE.sueldoOfrecido.importe)) === '45000');
   // HU-04 esc. 2: recuerda el idioma
   await page.reload();
-  check('HU-04 esc.2 abre en inglés', (await text('#lang')) === 'Español');
+  check('HU-04 esc.2 abre en inglés', (await text('#lang')) === 'ES');
   await page.click('#lang');
 
   // HU-11 esc. 2 y HU-12 esc. 1/3 con sueldo bajo
@@ -142,7 +142,7 @@ const check = (id, ok, info = '') => { results.push({ id, ok: !!ok, info }); };
   const zona = await page.evaluate(() => window.DZ_STATE.piso);
   await page.click('[data-act=informe]');
   const alqInf = await page.locator('#coste tbody tr').first().innerText();
-  check('HU-25 esc.2 alquiler del piso en el informe', alqInf.includes(zona.zonaNombre) && (await text('.hero')).toLowerCase().includes(zona.zonaNombre.toLowerCase()), alqInf.replace(/\s+/g, ' '));
+  check('HU-25 esc.2 alquiler del piso en el informe', alqInf.includes(zona.zonaNombre) && (await text('.pass')).toLowerCase().includes(zona.zonaNombre.toLowerCase()), alqInf.replace(/\s+/g, ' '));
   // HU-24 esc. 2: remoto
   await page.evaluate(() => { const S = window.DZ_STATE; S.trabajo.modalidad = 'remoto'; S.paso = 'semana'; });
   await page.click('#lang'); await page.click('#lang');
