@@ -1,0 +1,98 @@
+[
+  {
+    "pais": "ES",
+    "bruto": 25000,
+    "moneda": "EUR",
+    "regresion": 20077,
+    "ref_oficial": null,
+    "calculadora": "https://sede.agenciatributaria.gob.es (simulador de retenciones / Renta)"
+  },
+  {
+    "pais": "ES",
+    "bruto": 45000,
+    "moneda": "EUR",
+    "regresion": 33194,
+    "ref_oficial": null,
+    "calculadora": "https://sede.agenciatributaria.gob.es (simulador de retenciones / Renta)"
+  },
+  {
+    "pais": "ES",
+    "bruto": 90000,
+    "moneda": "EUR",
+    "regresion": 59574,
+    "ref_oficial": null,
+    "calculadora": "https://sede.agenciatributaria.gob.es (simulador de retenciones / Renta)"
+  },
+  {
+    "pais": "GB",
+    "bruto": 25000,
+    "moneda": "GBP",
+    "regresion": 21521,
+    "ref_oficial": null,
+    "calculadora": "https://www.gov.uk/estimate-income-tax"
+  },
+  {
+    "pais": "GB",
+    "bruto": 45000,
+    "moneda": "GBP",
+    "regresion": 35921,
+    "ref_oficial": null,
+    "calculadora": "https://www.gov.uk/estimate-income-tax"
+  },
+  {
+    "pais": "GB",
+    "bruto": 90000,
+    "moneda": "GBP",
+    "regresion": 62758,
+    "ref_oficial": null,
+    "calculadora": "https://www.gov.uk/estimate-income-tax"
+  },
+  {
+    "pais": "NL",
+    "bruto": 25000,
+    "moneda": "EUR",
+    "regresion": 24216,
+    "ref_oficial": null,
+    "calculadora": "https://www.belastingdienst.nl (rekenhulp loonheffing)"
+  },
+  {
+    "pais": "NL",
+    "bruto": 45000,
+    "moneda": "EUR",
+    "regresion": 36614,
+    "ref_oficial": null,
+    "calculadora": "https://www.belastingdienst.nl (rekenhulp loonheffing)"
+  },
+  {
+    "pais": "NL",
+    "bruto": 90000,
+    "moneda": "EUR",
+    "regresion": 58312,
+    "ref_oficial": null,
+    "calculadora": "https://www.belastingdienst.nl (rekenhulp loonheffing)"
+  },
+  {
+    "pais": "CH",
+    "bruto": 25000,
+    "moneda": "CHF",
+    "regresion": 22668,
+    "ref_oficial": null,
+    "calculadora": "https://www.zh.ch/de/steuern-finanzen/steuern/quellensteuer.html"
+  },
+  {
+    "pais": "CH",
+    "bruto": 45000,
+    "moneda": "CHF",
+    "regresion": 39073,
+    "ref_oficial": null,
+    "calculadora": "https://www.zh.ch/de/steuern-finanzen/steuern/quellensteuer.html"
+  },
+  {
+    "pais": "CH",
+    "bruto": 90000,
+    "moneda": "CHF",
+    "regresion": 73250,
+    "ref_oficial": null,
+    "calculadora": "https://www.zh.ch/de/steuern-finanzen/steuern/quellensteuer.html"
+  }
+]
