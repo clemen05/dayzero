@@ -1,9 +1,6 @@
 {
   "files.eol": "\n",
   "editor.tabSize": 2,
-  "editor.formatOnSave": false,
-  "files.exclude": { "**/__pycache__": true },
-  "search.exclude": { "src/data.js": true, "dist": true },
-  "files.associations": { "*.sqlite": "sqlite-viewer.option" },
-  "[python]": { "editor.tabSize": 4 }
+  "search.exclude": { "node_modules": true },
+  "files.associations": { "*.sqlite": "sqlite-viewer.option" }
 }

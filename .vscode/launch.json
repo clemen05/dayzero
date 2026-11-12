@@ -2,24 +2,37 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "App en Edge (depurar)",
-      "type": "msedge",
-      "request": "launch",
-      "url": "file:///${workspaceFolder}/dist/index.html",
-      "preLaunchTask": "DayZero: build (-> dist/index.html)"
-    },
-    {
-      "name": "App en Chrome (depurar)",
-      "type": "chrome",
-      "request": "launch",
-      "url": "file:///${workspaceFolder}/dist/index.html",
-      "preLaunchTask": "DayZero: build (-> dist/index.html)"
-    },
-    {
-      "name": "Tests del motor (depurar)",
+      "name": "DayZero: arrancar servidor",
       "type": "node",
       "request": "launch",
-      "runtimeArgs": ["--test", "tests/engine.test.js"],
+      "program": "${workspaceFolder}/server.js",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "serverReadyAction": {
+        "pattern": "http://localhost:([0-9]+)",
+        "uriFormat": "http://localhost:%s",
+        "action": "openExternally"
+      }
+    },
+    {
+      "name": "DayZero: servidor + depurar en Chrome",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/server.js",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "serverReadyAction": {
+        "pattern": "http://localhost:([0-9]+)",
+        "uriFormat": "http://localhost:%s",
+        "action": "debugWithChrome",
+        "webRoot": "${workspaceFolder}/public"
+      }
+    },
+    {
+      "name": "DayZero: depurar tests",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": ["--test", "tests/engine.test.js", "tests/api.test.js"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
     }

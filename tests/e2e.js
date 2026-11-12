@@ -1,23 +1,26 @@
 // Prueba de aceptación en navegador (Playwright): node tests/e2e.js
 // Recorre los escenarios de las historias del Sprint 1 sobre dist/index.html.
-const { chromium } = require('playwright');
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const { cargarDatos } = require('../server/db');
+const { crearApp } = require('../server/app');
 const path = require('path');
 const fs = require('fs');
-const { pathToFileURL } = require('url');
 
-const FILE = pathToFileURL(path.resolve(__dirname, '../dist/index.html')).href;
+let FILE;
 fs.mkdirSync(path.resolve(__dirname, '../shots'), { recursive: true });
 const results = [];
 const check = (id, ok, info = '') => { results.push({ id, ok: !!ok, info }); };
 
 (async () => {
+  const server = crearApp(await cargarDatos()).listen(0);
+  FILE = `http://localhost:${server.address().port}/`;
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 1100, height: 900 } });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !/fonts\.g|ERR_TUNNEL|ERR_INTERNET/.test(m.text())) errors.push(m.text()); });
-  await page.goto(FILE);
+  await page.goto(FILE); await page.waitForFunction(() => window.DZ_STATE);
   const text = async (sel) => (await page.locator(sel).first().innerText()).trim();
 
   // HU-01 esc. 2: misma ciudad
@@ -97,7 +100,7 @@ const check = (id, ok, info = '') => { results.push({ id, ok: !!ok, info }); };
   check('HU-04 esc.1 todo en inglés', /^In London you have .+ (more|less) left each month than in Madrid$/.test(ouchEn), ouchEn);
   check('HU-04 esc.1 datos conservados', (await page.evaluate(() => window.DZ_STATE.sueldoOfrecido.importe)) === '45000');
   // HU-04 esc. 2: recuerda el idioma
-  await page.reload();
+  await page.reload(); await page.waitForFunction(() => window.DZ_STATE);
   check('HU-04 esc.2 abre en inglés', (await text('#lang')) === 'ES');
   await page.click('#lang');
 
@@ -155,7 +158,7 @@ const check = (id, ok, info = '') => { results.push({ id, ok: !!ok, info }); };
 
   // Móvil
   const m = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  await m.goto(FILE);
+  await m.goto(FILE); await m.waitForFunction(() => window.DZ_STATE);
   await m.evaluate(() => { const S = window.DZ_STATE; S.sueldoOfrecido.importe = '45000'; S.paso = 'resultado'; });
   await m.click('#lang'); await m.click('#lang');
   const ow = await m.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -164,6 +167,7 @@ const check = (id, ok, info = '') => { results.push({ id, ok: !!ok, info }); };
 
   check('Sin errores de JavaScript', errors.length === 0, errors.join(' | '));
   await browser.close();
+  server.close();
   const fail = results.filter((r) => !r.ok);
   results.forEach((r) => console.log(`${r.ok ? 'OK  ' : 'FAIL'} ${r.id}${r.info ? '  · ' + r.info : ''}`));
   console.log(`\n${results.length - fail.length}/${results.length} escenarios OK`);

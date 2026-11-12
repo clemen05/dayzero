@@ -1,7 +1,7 @@
-dist/
-shots/
 node_modules/
-__pycache__/
-*.pyc
+shots/
+dist/
+*.log
 .DS_Store
 Thumbs.db
+.env

@@ -3,8 +3,10 @@
 // calculadora oficial de cada país; mientras esté a null, el test comprueba el valor de regresión.
 const test = require('node:test');
 const assert = require('node:assert');
-require('../src/data.js');
-const DZ = require('../src/engine.js');
+const { cargarDatos } = require('../server/db');
+const DZ = require('../shared/engine.js');
+
+test.before(async () => { globalThis.DZ_DATA = await cargarDatos(); });
 
 const casos = require('./casos_fiscales.json');
 

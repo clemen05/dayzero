@@ -1,45 +1,77 @@
-# DayZero · Sprint 1
+# DayZero
 
-Web que compara tu vida entre Madrid, Londres, Ámsterdam y Zúrich: sueldo neto, coste de vida, coste de arranque y «el número que duele», con la fuente de cada cifra. Cubre las 14 historias del sprint DZ Sprint 1 (DAYZ-9 a DAYZ-20, DAYZ-32 y DAYZ-33).
+Web app que compara tu vida entre **Madrid, Londres, Ámsterdam y Zúrich**: sueldo neto, coste de vida, coste de instalarte y «el número que duele», con la fuente de cada cifra. Cubre las 14 historias del **Sprint 1** del proyecto DAYZ en Jira.
+
+- **Backend:** Node.js + Express. Lee `data/dayzero.sqlite` directamente (con sql.js, no hay que compilar nada) y expone una API REST.
+- **Frontend:** HTML, CSS y JavaScript sin frameworks, en `public/`.
+- **Motor de cálculo:** `shared/engine.js`, el mismo archivo en el servidor y en el navegador.
+
+## Puesta en marcha (Windows + Visual Studio Code)
+
+1. Instala **Node.js LTS** desde https://nodejs.org (botón verde). Siguiente, siguiente, finalizar.
+2. Abre VS Code → `Archivo → Abrir carpeta…` → elige la carpeta `dayzero`.
+3. Abre la terminal: `Terminal → Nuevo terminal`.
+4. Instala las dependencias (solo la primera vez):
+   ```
+   npm install
+   ```
+5. Arranca la web:
+   ```
+   npm start
+   ```
+6. Abre **http://localhost:3000** en el navegador.
+
+También puedes pulsar **F5** y elegir **«DayZero: arrancar servidor»**: arranca y abre el navegador solo.
+
+Para programar con recarga automática: `npm run dev` (reinicia el servidor al guardar).
 
 ## Estructura
 
-| Ruta | Qué es |
-|---|---|
-| `data/dayzero.sqlite` | Dataset original (solo lectura) |
-| `tools/export_data.py` | Exporta el SQLite a `src/data.js` y repara textos mal codificados (p. ej. «ChamartÃ­n») |
-| `src/engine.js` | Motor de cálculo puro: impuestos de los 4 países (HU-06), precios (HU-05), moneda (HU-08), transporte (HU-24), coste de vida (HU-10), arranque (HU-11), número que duele (HU-12), pisos (HU-25) |
-| `src/i18n.js` | Todos los textos en español e inglés (HU-04) |
-| `src/app.js` | Interfaz: asistente de 4 pasos, resultados, semana día 1, botón «i» de fuentes (HU-07) |
-| `src/index.html` | Plantilla y estilos |
-| `tools/build.py` | Junta todo en `dist/index.html` (un único archivo, funciona sin servidor) |
-| `tests/engine.test.js` | 19 pruebas del motor, incluidos los 12 casos fiscales de HU-06 |
-| `tests/casos_fiscales.json` | Casos de HU-06: rellenar `ref_oficial` con la calculadora oficial de cada país |
-| `tests/e2e.js` | 44 comprobaciones en navegador de los criterios de aceptación de Jira |
-
-## Abrirlo en Visual Studio Code
-
-1. `Archivo → Abrir carpeta…` y elige la carpeta `dayzero`. Acepta instalar las extensiones recomendadas.
-2. `Ctrl+Shift+B` → build: genera `dist/index.html`.
-3. `Ctrl+Shift+P → Tasks: Run Task → DayZero: abrir la app` para verla en el navegador, o `F5 → App en Edge (depurar)` para depurarla con puntos de interrupción.
-4. `Ctrl+Shift+P → Tasks: Run Test Task` ejecuta los tests del motor.
-
-Requisitos: Python 3 (para el build) y Node.js 18 o superior (para los tests). La app en sí no necesita nada: `dist/index.html` se abre con doble clic.
-
-## Comandos (terminal)
-
-```bash
-npm run data    # SQLite -> src/data.js (cuando cambie el dataset)
-npm run build   # -> dist/index.html
-npm test        # motor (19 pruebas, incluidos los 12 casos de HU-06)
-npm install     # solo la primera vez, para los tests de aceptación
-npx playwright install chromium
-npm run e2e     # 44 comprobaciones de los criterios de aceptación de Jira
+```
+dayzero/
+├── server.js              Punto de entrada (npm start)
+├── server/
+│   ├── app.js             Express: rutas de la API y archivos estáticos
+│   └── db.js              Lee el SQLite y repara los textos mal codificados
+├── shared/
+│   └── engine.js          Motor de cálculo (servidor y navegador)
+├── public/                La web
+│   ├── index.html
+│   ├── css/styles.css
+│   └── js/
+│       ├── main.js        Carga los datos de la API y arranca la interfaz
+│       ├── i18n.js        Textos en español e inglés (HU-04)
+│       └── app.js         Pantallas e interacción
+├── data/dayzero.sqlite    Dataset
+├── tests/                 Tests del motor, de la API y de aceptación
+└── api.http               Peticiones de ejemplo (extensión REST Client)
 ```
 
-## Git y Jira
+## API
 
-Los mensajes de commit llevan la clave de Jira (`DAYZ-13`, `DAYZ-14`…). Si conectáis el repositorio a Jira (GitHub for Jira o Bitbucket), cada commit aparece en su historia. Para trabajar: una rama por historia, `feature/DAYZ-14-impuestos`, y pull request a `main`.
+| Método | Ruta | Qué devuelve |
+|---|---|---|
+| GET | `/api/ciudades` | Las 4 ciudades con país y moneda |
+| GET | `/api/datos` | Todas las tablas que usa la web |
+| GET | `/api/tipos-cambio` | Último tipo de referencia del BCE |
+| GET | `/api/neto?pais=ES&bruto=30000&edad=30` | Neto anual y desglose de impuestos |
+| POST | `/api/calcular` | Neto, coste de vida, arranque y número que duele |
+| GET | `/api/pisos?ciudad=LON&tipo=estudio` | Tres pisos reales con alquiler y trayecto |
+| GET | `/api/fuentes/:id` | Ficha de una fuente (licencia, enlace, atribución) |
+
+## Tests
+
+```
+npm test            # 27 tests: motor (incluidos los 12 casos fiscales de HU-06) y API
+npx playwright install chromium   # solo la primera vez
+npm run e2e         # 44 comprobaciones de los criterios de aceptación de Jira en un navegador real
+```
+
+`tests/casos_fiscales.json`: rellenad `ref_oficial` con el resultado de la calculadora oficial de cada país y el test comprobará el margen de ±1 % que pide HU-06.
+
+## Publicarla en internet
+
+Cualquier hosting de Node sirve (Render, Railway, Fly.io, Azure App Service). Comando de arranque: `npm start`. El puerto se toma de la variable `PORT`.
 
 ## Regla de datos
 
@@ -47,10 +79,14 @@ Cada cifra sale del motor con su fuente, su fecha y su `origen_dato`. Si un dato
 
 ## Decisiones tomadas (revisar con el equipo)
 
-- **Nacionalidad y edad**: se añadieron a la pantalla de situación (HU-03) porque HU-11 necesita saber si hay visado y Zúrich necesita la edad (pensión BVG y seguro médico).
-- **Alquiler**: precio de oferta para recién llegados; si no hay, contratos vigentes × `ajuste_nuevo_contrato`.
-- **Electricidad**: el dataset da €/kWh; se supone un consumo de 150 kWh/mes (marcado como «supuesto de la app»).
-- **Londres**: council tax banda D (mediana de los 33 distritos) con el 25 % de descuento por vivir solo; en habitación no se suma porque el precio de SpareRoom incluye gastos.
-- **Vuelos**: si falta un sentido (p. ej. Londres→Madrid) se usa el contrario.
-- **Sin dato**: agencia, seguro médico neerlandés y tasas de visado de fuera de la UE en Reino Unido y Países Bajos.
-- **Impuestos**: persona soltera sin hijos; Suiza tarifa A0N. Es el impuesto anual final, no la retención de nómina.
+- **Nacionalidad y edad** se piden en la pantalla de situación: HU-11 necesita saber si hay visado y Zúrich necesita la edad.
+- **Alquiler:** precio de oferta para recién llegados; si no lo hay, contratos vigentes × `ajuste_nuevo_contrato`.
+- **Electricidad:** consumo supuesto de 150 kWh/mes (marcado como «supuesto de la app»).
+- **Londres:** council tax de banda D con el 25 % de descuento por vivir solo; en habitación no se suma porque SpareRoom ya incluye los gastos.
+- **Vuelos:** si falta un sentido se usa el contrario.
+- **Sin dato:** agencia, seguro médico neerlandés y tasas de visado de fuera de la UE en Reino Unido y Países Bajos.
+- **Impuestos:** persona soltera sin hijos; Suiza tarifa A0N. Es el impuesto anual final, no la retención de nómina.
+
+## Git y Jira
+
+Los commits llevan la clave de Jira (`DAYZ-13`, `DAYZ-14`…). Conectando el repositorio a Jira (GitHub for Jira), cada commit aparece en su historia. Una rama por historia: `feature/DAYZ-14-impuestos`.

@@ -1,0 +1,30 @@
+### Prueba la API desde VS Code con la extensión REST Client: pulsa «Send Request» encima de cada petición.
+@base = http://localhost:3000
+
+### Ciudades
+GET {{base}}/api/ciudades
+
+### Neto anual en Londres con 45.000 £ brutos
+GET {{base}}/api/neto?pais=GB&bruto=45000
+
+### Cálculo completo Madrid -> Londres
+POST {{base}}/api/calcular
+Content-Type: application/json
+
+{
+  "origen": "MAD",
+  "destino": "LON",
+  "edad": 28,
+  "vivienda": "1_dormitorio",
+  "nacionalidad": "ue",
+  "dineroMudanza": 3000,
+  "trabajo": { "modalidad": "hibrido", "dias": 3 },
+  "sueldoActual": { "importe": 30000, "tipo": "bruto", "pagas": 14, "moneda": "EUR" },
+  "sueldoOfrecido": { "importe": 45000, "tipo": "bruto", "pagas": 12, "moneda": "GBP" }
+}
+
+### Tres pisos en Ámsterdam
+GET {{base}}/api/pisos?ciudad=AMS&tipo=estudio
+
+### Tipos de cambio del BCE
+GET {{base}}/api/tipos-cambio
