@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "App en Edge (depurar)",
+      "type": "msedge",
+      "request": "launch",
+      "url": "file:///${workspaceFolder}/dist/index.html",
+      "preLaunchTask": "DayZero: build (-> dist/index.html)"
+    },
+    {
+      "name": "App en Chrome (depurar)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "file:///${workspaceFolder}/dist/index.html",
+      "preLaunchTask": "DayZero: build (-> dist/index.html)"
+    },
+    {
+      "name": "Tests del motor (depurar)",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": ["--test", "tests/engine.test.js"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    }
+  ]
+}

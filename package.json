@@ -1,0 +1,15 @@
+{
+  "name": "dayzero",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DayZero · Sprint 1: compara tu vida entre Madrid, Londres, Ámsterdam y Zúrich",
+  "scripts": {
+    "data": "python tools/export_data.py data/dayzero.sqlite",
+    "build": "python tools/build.py",
+    "test": "node --test tests/engine.test.js",
+    "e2e": "node tests/e2e.js"
+  },
+  "devDependencies": {
+    "playwright": "1.47.2"
+  }
+}
