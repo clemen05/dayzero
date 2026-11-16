@@ -1,8 +1,10 @@
 // Prueba de aceptación en navegador (Playwright): node tests/e2e.js
-// Recorre los escenarios de las historias del Sprint 1 sobre dist/index.html.
+// Recorre los escenarios de las historias del Sprint 1 contra el servidor real.
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const { cargarDatos } = require('../server/db');
 const { crearApp } = require('../server/app');
+const { storeArchivo } = require('../server/store');
+const os = require('os');
 const path = require('path');
 const fs = require('fs');
 
@@ -12,7 +14,10 @@ const results = [];
 const check = (id, ok, info = '') => { results.push({ id, ok: !!ok, info }); };
 
 (async () => {
-  const server = crearApp(await cargarDatos()).listen(0);
+  // Almacén temporal sin límite de partidas (el límite se prueba en e2e-sprint2.js)
+  const store = storeArchivo(path.join(os.tmpdir(), `dz-e2e-${process.pid}.json`)); await store.init();
+  store.contarInicios = async () => 0;
+  const server = crearApp(await cargarDatos(), { store }).listen(0);
   FILE = `http://localhost:${server.address().port}/`;
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 1100, height: 900 } });
@@ -127,28 +132,29 @@ const check = (id, ok, info = '') => { results.push({ id, ok: !!ok, info }); };
   // NL seguro médico sin dato
   check('HU-05 esc.2 seguro NL sin dato', /Seguro médico obligatorio[\s\S]*sin dato/.test(await page.locator('#coste').innerText()));
 
-  // HU-03 + HU-25
+  // HU-03 + HU-25 (ahora dentro de la semana jugable)
+  const rerender = async (pg = page) => { await pg.click('#lang'); await pg.click('#lang'); };
   await page.evaluate(() => { const S = window.DZ_STATE; S.conoceAlguien = true; });
   await page.click('#btn-semana');
   check('HU-03 esc.1 dinero inicial 3.000 €', /3\.?000\s?€/.test(await text('#hud-dinero')), await text('#hud-dinero'));
   check('HU-03 esc.1 colchón aparte', /2\.?000\s?€/.test(await text('#hud-colchon')));
   check('HU-03 esc.2 bienestar 80', (await text('#hud-bienestar')) === '80');
-  check('HU-25 esc.1 tres pisos con alquiler', (await page.locator('.flat').count()) === 3);
+  await page.click('#btn-empezar'); await page.waitForSelector('#decision');
+  check('HU-25 esc.1 tres pisos con alquiler', (await page.locator('.flat').count()) === 3 && /€/.test(await page.locator('.flat .rent').first().innerText()));
   check('HU-25 esc.3 modo historia oculta trayecto', (await page.locator('.flat').first().innerText()).includes('Lo descubrirás'));
-  await page.check('#modo-plan', { force: true });
-  check('HU-25 esc.1 trayecto visible en planificador', /\d+ min/.test(await page.locator('.flat').first().innerText()));
-  await page.check('#modo-historia', { force: true });
   await page.locator('.flat button.primary').first().click();
-  const rev = await text('.reveal');
-  check('HU-25 esc.3 descubre trayecto tras elegir', /tardas \d+ minutos/.test(rev), rev.split('\n')[0]);
+  const rev = await text('#resultado-decision');
+  check('HU-25 esc.3 descubre trayecto tras elegir', /tardas \d+ minutos/.test(rev), rev.split('\n').find((l) => /tardas/.test(l)));
   await page.screenshot({ path: path.resolve(__dirname, '../shots/semana.png'), fullPage: true });
   const zona = await page.evaluate(() => window.DZ_STATE.piso);
-  await page.click('[data-act=informe]');
+  await page.evaluate(() => { window.DZ_STATE.paso = 'resultado'; });
+  await rerender();
   const alqInf = await page.locator('#coste tbody tr').first().innerText();
   check('HU-25 esc.2 alquiler del piso en el informe', alqInf.includes(zona.zonaNombre) && (await text('.pass')).toLowerCase().includes(zona.zonaNombre.toLowerCase()), alqInf.replace(/\s+/g, ' '));
   // HU-24 esc. 2: remoto
-  await page.evaluate(() => { const S = window.DZ_STATE; S.trabajo.modalidad = 'remoto'; S.paso = 'semana'; });
-  await page.click('#lang'); await page.click('#lang');
+  await page.evaluate(() => { const S = window.DZ_STATE; S.trabajo.modalidad = 'remoto'; S.partida = null; S.paso = 'semana'; });
+  await rerender();
+  await page.click('#btn-empezar'); await page.waitForSelector('#decision');
   check('HU-24 esc.2 remoto sin trayecto', /desde el piso: no hay trayecto/.test(await page.locator('.week').innerText()));
   // Zúrich
   await page.evaluate(() => { const S = window.DZ_STATE; S.destino = 'ZRH'; S.piso = null; S.trabajo.modalidad = 'oficina'; S.sueldoOfrecido = { importe: '95000', tipo: 'bruto', pagas: 12, moneda: 'CHF' }; S.paso = 'resultado'; });
@@ -160,7 +166,7 @@ const check = (id, ok, info = '') => { results.push({ id, ok: !!ok, info }); };
   const m = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await m.goto(FILE); await m.waitForFunction(() => window.DZ_STATE);
   await m.evaluate(() => { const S = window.DZ_STATE; S.sueldoOfrecido.importe = '45000'; S.paso = 'resultado'; });
-  await m.click('#lang'); await m.click('#lang');
+  await rerender(m);
   const ow = await m.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   check('Móvil sin scroll horizontal', ow <= 0, `overflow ${ow}px`);
   await m.screenshot({ path: path.resolve(__dirname, '../shots/movil.png'), fullPage: true });
