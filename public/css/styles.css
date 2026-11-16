@@ -474,3 +474,6 @@ footer.foot { color: var(--muted); font: 600 .72rem var(--f-mono); letter-spacin
 .games { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
 .game { display: grid; gap: 6px; padding: 18px; border-radius: 16px; background: var(--night-2); border: 1px solid var(--line); border-left: 4px solid var(--muted); }
 .game.v-sobreviviste { border-left-color: var(--pos); } .game.v-pelos { border-left-color: var(--sodium); } .game.v-pudo { border-left-color: var(--neg); }
+
+footer.foot a { color: var(--muted); }
+footer.foot a:hover { color: var(--sodium); }
