@@ -793,7 +793,12 @@
     const timer = setTimeout(() => ctrl && ctrl.abort(), 6500);
     fetch('/api/narrar', {
       method: 'POST', headers: { 'content-type': 'application/json' }, signal: ctrl ? ctrl.signal : undefined,
-      body: JSON.stringify({ dia, destino: S.destino, lang: S.lang, anterior, tema: t('dias')[DZJ.DIAS[dia - 1].id], permitidas: DZJ.cifrasPermitidas(p) }),
+      body: JSON.stringify({
+        dia, destino: S.destino, lang: S.lang, anterior,
+        tema: t('dias')[DZJ.DIAS[dia - 1].id] + (dia === 5 ? ': ' + t('q_' + (p.gordo || 'cerrajero')) : ''),
+        variante: dia === 5 && p.gordo === 'movil_roto' ? 'movil_roto' : undefined,
+        permitidas: DZJ.cifrasPermitidas(p),
+      }),
     }).then((r) => r.json()).then((j) => { S.narr[key] = { texto: j.texto || '', fuente: j.fuente || 'reserva' }; })
       .catch(() => { S.narr[key] = { texto: '', fuente: 'reserva' }; }) // HU-19 esc. 2: sin mensaje de error
       .finally(() => { clearTimeout(timer); narrPedidas.delete(key); if (S.paso === 'juego') { const el = document.getElementById('narracion'); const n = S.narr[key]; if (el && n) { if (n.texto) { el.classList.remove('loading'); el.dataset.fuente = n.fuente; el.querySelector('p').textContent = n.texto; } else el.remove(); } guardarEstado(); } });

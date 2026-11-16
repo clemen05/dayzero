@@ -159,7 +159,7 @@ const SHOTS = path.resolve(__dirname, '../shots'); fs.mkdirSync(SHOTS, { recursi
   const imp = await page.evaluate(() => {
     const p = window.DZ_STATE.partida; const pas = p.pasos.filter((x) => x.tipo !== 'decision');
     const ids = pas.map((x) => x.id); const peq = p.imprevistos;
-    const precios = ids.map((id) => window.DZ.precioImprevisto(id === 'cerrajero' ? window.DZJ.IMPREVISTO_GORDO : id, 'LON'));
+    const precios = ids.map((id) => window.DZ.precioImprevisto(window.DZJ.GORDOS[id] || id, 'LON'));
     return { total: pas.length, peq: peq.length, gordoDia5: pas.some((x) => x.tipo === 'imprevisto_gordo' && x.dia === 5), unicos: new Set(ids).size === ids.length, monedas: [...new Set(precios.map((d) => d.moneda))], sinDato: precios.some((d) => d.sinDato) };
   });
   check('HU-17 esc.1 2-3 pequeños + el gordo del día 5 (3 o 4)', imp.peq >= 2 && imp.peq <= 3 && imp.gordoDia5 && imp.total >= 3 && imp.total <= 4, JSON.stringify(imp));

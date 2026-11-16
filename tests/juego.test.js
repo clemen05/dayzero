@@ -123,3 +123,59 @@ test('HU-18 cifras permitidas: solo las del motor', () => {
   assert.ok(c.includes('95') && c.includes(String(Math.round(p.dinero))));
   assert.ok(!c.includes('4321'));
 });
+
+test('Piso compartido: el gordo del día 5 es el móvil roto, nunca el cerrajero', () => {
+  for (const c of ['MAD', 'LON', 'AMS', 'ZRH']) {
+    for (let seed = 1; seed <= 40; seed++) {
+      const p = J.crearPartida({ estado: estado(c, { vivienda: 'habitacion' }), seed });
+      const ids = p.pasos.map((x) => x.id);
+      assert.ok(!ids.includes('cerrajero'), `${c}/${seed} con cerrajero`);
+      const g = p.pasos.filter((x) => x.tipo === 'imprevisto_gordo');
+      assert.deepStrictEqual(g.map((x) => [x.dia, x.id]), [[5, 'movil_roto']]);
+      assert.ok(!ids.includes('I03'), 'el móvil no sale también como imprevisto pequeño');
+      jugar(p);
+    }
+    const otro = J.crearPartida({ estado: estado(c), seed: 3 });
+    assert.ok(otro.pasos.some((x) => x.id === 'cerrajero' && x.dia === 5), 'con piso propio sigue el cerrajero');
+  }
+});
+
+test('Robo de la bici: siempre después del día 3 y solo si eliges ir en bici', () => {
+  let conBici = 0; let sinBici = 0;
+  for (const c of ['MAD', 'LON', 'AMS', 'ZRH']) {
+    for (let seed = 1; seed <= 150; seed++) {
+      const remoto = J.crearPartida({ estado: estado(c, { trabajo: { modalidad: 'remoto' } }), seed });
+      assert.ok(!remoto.pasos.some((x) => x.id === 'I07'), 'en remoto no hay bici que robar');
+      for (const ida of ['bici', 'publico']) {
+        const p = J.crearPartida({ estado: estado(c), seed, colchon: 5000 });
+        const robo = p.pasos.find((x) => x.id === 'I07');
+        if (robo) assert.ok(robo.dia > 3, `${c}/${seed} robo el día ${robo.dia}`);
+        const n = p.pasos.filter((x) => x.tipo === 'imprevisto').length;
+        while (p.fase !== 'fin') {
+          if (p.fase === 'sindinero') { J.aplicarSalida(p, 'tarjeta'); continue; }
+          const paso = J.pasoActual(p);
+          const ops = J.opcionesActuales(p).filter((o) => !o.bloqueada);
+          const op = paso.id === 'ida_trabajo' ? ops.find((o) => o.id === ida) : ops[0];
+          J.elegir(p, op.id); J.continuar(p);
+        }
+        const salio = p.historial.some((h) => h.paso === 'I07');
+        if (ida === 'publico') assert.ok(!salio, `${c}/${seed} robo de bici yendo en transporte público`);
+        if (robo && ida === 'bici') { assert.ok(salio); conBici++; }
+        if (robo && ida === 'publico') {
+          sinBici++;
+          const ids = p.pasos.filter((x) => x.tipo === 'imprevisto').map((x) => x.id);
+          assert.strictEqual(new Set(ids).size, ids.length, 'el sustituto no repite imprevisto');
+          assert.ok(ids.length === n || ids.length === n - 1);
+        }
+      }
+    }
+  }
+  assert.ok(conBici > 0 && sinBici > 0);
+});
+
+test('Narración de reserva del día 5 con el móvil roto no habla de llaves', () => {
+  const { textoReserva } = require('../server/narrador');
+  const t = textoReserva({ dia: 5, lang: 'es', ciudad: 'Londres', anterior: 'el menú', variante: 'movil_roto' });
+  assert.ok(/móvil/.test(t) && !/llave/.test(t));
+  assert.ok(/llaves/.test(textoReserva({ dia: 5, lang: 'es', ciudad: 'Londres', anterior: 'x' })));
+});

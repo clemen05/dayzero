@@ -14,6 +14,7 @@ const RESERVA = {
     3: 'Primer día de trabajo en {ciudad}. Después de {anterior}, hoy por fin empieza la parte que justifica todo esto. Caras nuevas, una mesa que todavía no es tuya y la pregunta de siempre: cómo llegas y qué comes. Pequeñas decisiones que, sumadas, dicen cuánto te va a costar esta vida.',
     4: 'Hoy en {ciudad} toca firmar. Tras {anterior}, te sientas frente al contrato del piso y la cifra de la fianza te mira sin pestañear. Es el día de las llaves, pero también el de vaciar la cuenta. Y luego, claro, una casa vacía que hay que convertir en hogar.',
     5: 'El día que nadie planifica llega en {ciudad}. Vuelves a casa después de {anterior} y la puerta no se abre: las llaves se han quedado dentro. Es de noche, hace frío y no conoces a casi nadie. Lo que hagas ahora decide cómo duermes hoy y cuánto te dura el dinero.',
+    '5_movil_roto': 'El día que nadie planifica llega en {ciudad}. Después de {anterior}, el móvil se te escurre de la mano y la pantalla se queda en negro. Sin mapa, sin banco y sin forma de avisar a nadie, de repente la ciudad parece el doble de grande. Lo que hagas ahora decide cuánto te dura el dinero esta semana.',
     6: 'Primer fin de semana en {ciudad}. Después de {anterior}, por fin tienes tiempo para ti. La ciudad está llena de planes, pero tu cartera ya ha notado la semana. Puedes salir, conocer gente o quedarte en casa recuperando fuerzas. Aquí también se juega tu bienestar.',
     7: 'Último día de tu primera semana en {ciudad}. Repasas lo vivido, desde {anterior} hasta este momento, y miras el saldo de tu cuenta con otros ojos. Quedan un par de decisiones para cerrar la semana y preparar el mes que viene. Mañana empieza la vida normal.',
   },
@@ -23,13 +24,15 @@ const RESERVA = {
     3: 'First day at work in {ciudad}. After {anterior}, the part that justifies all this finally begins. New faces, a desk that is not yours yet and the usual questions: how do you get there and what do you eat. Small choices that add up to what this life will cost you.',
     4: 'Today in {ciudad} you sign. After {anterior}, you sit in front of the tenancy agreement and the deposit stares back at you. It is the day you get the keys, and also the day your account empties. And then there is an empty flat to turn into a home.',
     5: 'The day nobody plans for arrives in {ciudad}. You come home after {anterior} and the door will not open: your keys are inside. It is late at night, it is cold and you barely know anyone. What you do now decides how you sleep tonight and how long your money lasts.',
+    '5_movil_roto': 'The day nobody plans for arrives in {ciudad}. After {anterior}, your phone slips out of your hand and the screen goes black. No maps, no banking and no way to reach anyone: suddenly the city feels twice as big. What you do now decides how long your money lasts this week.',
     6: 'Your first weekend in {ciudad}. After {anterior}, you finally have time for yourself. The city is full of plans, but your wallet has felt the week. You can go out, meet people or stay in and recover. Your wellbeing is at stake here too.',
     7: 'The last day of your first week in {ciudad}. You look back at everything, from {anterior} to right now, and see your bank balance with new eyes. A couple of choices remain to close the week and get ready for next month. Tomorrow, normal life begins.',
   },
 };
 
-function textoReserva({ dia, lang, ciudad, anterior }) {
-  const t = (RESERVA[lang] || RESERVA.es)[dia] || RESERVA.es[1];
+function textoReserva({ dia, lang, ciudad, anterior, variante }) {
+  const r = RESERVA[lang] || RESERVA.es;
+  const t = (variante && r[`${dia}_${variante}`]) || r[dia] || RESERVA.es[1];
   return t.replace('{ciudad}', ciudad).replace('{anterior}', anterior);
 }
 

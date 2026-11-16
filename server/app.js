@@ -77,7 +77,8 @@ function crearApp(datos, { store } = {}) {
     const lang = b.lang === 'en' ? 'en' : 'es';
     const r = await narrar({
       dia, lang, ciudad: lang === 'en' ? c.nombre_en : c.nombre_es,
-      anterior: String(b.anterior || '').slice(0, 120), tema: String(b.tema || '').slice(0, 80),
+      anterior: String(b.anterior || '').slice(0, 120), tema: String(b.tema || '').slice(0, 160),
+      variante: /^[a-z_]{1,20}$/.test(String(b.variante || '')) ? String(b.variante) : undefined,
       permitidas: Array.isArray(b.permitidas) ? b.permitidas.slice(0, 200).map(String) : [],
     });
     res.json(r);

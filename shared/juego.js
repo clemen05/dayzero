@@ -29,6 +29,12 @@
   const IMPREVISTO_GORDO = 'I01'; // cerrajero de urgencia, fijo en el día 5 (HU-17)
   const CATALOGO_PEQUENOS = ['I02', 'I03', 'I04', 'I05', 'I06', 'I07'];
   const DIAS_IMPREVISTO = [2, 3, 4, 6, 7];
+  const IMPREVISTO_BICI = 'I07'; // «te roban la bici»: solo si eliges ir en bici el día 3
+  /* El imprevisto gordo del día 5 depende de la vivienda: en un piso compartido siempre hay
+   * alguien dentro para abrirte, así que en vez del cerrajero se te rompe el móvil (I03). */
+  const GORDOS = { cerrajero: 'I01', movil_roto: 'I03' };
+  function gordoDe(vivienda) { return vivienda === 'habitacion' ? 'movil_roto' : 'cerrajero'; }
+  const esGordo = (id) => Object.prototype.hasOwnProperty.call(GORDOS, id);
 
   // ---------- Azar con semilla (la partida se puede reconstruir igual) ----------
   function mulberry32(a) {
@@ -139,6 +145,11 @@
       }
       case 'amueblar':
         return [{ id: 'kit', coste: DZ.kitCasa(c), b: 6 }, { id: 'apanarte', coste: g(), b: -6 }];
+      case 'movil_roto':
+        return [
+          { id: 'reparar', coste: DZ.precioImprevisto(GORDOS.movil_roto, c), b: -2 },
+          { id: 'aguantar', coste: g(), b: -8 },
+        ];
       case 'cerrajero':
         return [
           { id: 'urgencia', coste: DZ.precioImprevisto(IMPREVISTO_GORDO, c), b: -2 },
@@ -178,16 +189,26 @@
     const md = DZ.ciudad(e.destino).moneda_iso; const mo = DZ.ciudad(e.origen).moneda_iso;
     const seed = ctx.seed != null ? ctx.seed : Math.floor(Math.random() * 2 ** 31);
     const rnd = mulberry32(seed);
-    // 2 o 3 imprevistos pequeños con precio en la ciudad de destino, en días distintos y sin repetir
-    const disponibles = CATALOGO_PEQUENOS.filter((id) => !DZ.precioImprevisto(id, e.destino).sinDato);
+    const gordo = gordoDe(e.vivienda);
+    const remoto = e.trabajo && e.trabajo.modalidad === 'remoto';
+    // 2 o 3 imprevistos pequeños con precio en la ciudad de destino, en días distintos y sin repetir.
+    // Nunca el mismo que el gordo del día 5, y el robo de la bici solo si puedes ir en bici (no en remoto).
+    const disponibles = CATALOGO_PEQUENOS.filter((id) => id !== GORDOS[gordo] && !(remoto && id === IMPREVISTO_BICI)
+      && !DZ.precioImprevisto(id, e.destino).sinDato);
     const cuantos = Math.min(disponibles.length, rnd() < 0.5 ? 2 : 3);
     const elegidos = barajar(disponibles, rnd).slice(0, cuantos);
-    const dias = barajar(DIAS_IMPREVISTO, rnd).slice(0, cuantos);
-    const imprevistos = elegidos.map((id, i) => ({ id, dia: dias[i] })).sort((a, b) => a.dia - b.dia);
+    const dias = barajar(DIAS_IMPREVISTO, rnd);
+    // La bici se elige el día 3, así que su robo va después (día 4, 6 o 7)
+    const usados = new Set();
+    const imprevistos = elegidos.slice().sort((a, b) => (b === IMPREVISTO_BICI) - (a === IMPREVISTO_BICI)).map((id) => {
+      const dia = dias.find((d) => !usados.has(d) && (id !== IMPREVISTO_BICI || d > 3));
+      usados.add(dia); return { id, dia };
+    }).sort((a, b) => a.dia - b.dia);
     const pasos = [];
     DIAS.forEach((d) => {
       imprevistos.filter((x) => x.dia === d.n).forEach((x) => pasos.push({ dia: d.n, tipo: 'imprevisto', id: x.id }));
-      d.decisiones.forEach((id, i) => pasos.push({ dia: d.n, tipo: id === 'cerrajero' ? 'imprevisto_gordo' : 'decision', id, orden: i }));
+      d.decisiones.map((id) => (id === 'cerrajero' ? gordo : id))
+        .forEach((id, i) => pasos.push({ dia: d.n, tipo: esGordo(id) ? 'imprevisto_gordo' : 'decision', id, orden: i }));
     });
     const dinero = DZ.convertir(Number(e.dineroMudanza) || 0, mo, md, fx);
     return {
@@ -199,7 +220,7 @@
       colchon: DZ.convertir(Number(ctx.colchon) || 0, mo, md, fx),
       bienestar: ctx.conoceAlguien ? 80 : 60, // HU-15 esc. 1
       recorte: false, deuda: 0, pendientes: [], salidaActiva: null,
-      imprevistos, pasos, cursor: 0, fase: 'decision',
+      gordo, imprevistos, pasos, cursor: 0, fase: 'decision',
       historial: [], salidas: [], piso: null, ultimo: null,
     };
   }
@@ -232,6 +253,7 @@
     p.bienestar = clamp(p.bienestar + op.b, 0, 100); // HU-15 esc. 2
     if (op.efecto && op.efecto.piso) p.piso = op.piso;
     if (op.efecto && op.efecto.pendiente) p.pendientes.push(op.efecto.pendiente);
+    if (paso.id === 'ida_trabajo' && op.id !== 'bici') sinBici(p);
     const r = {
       dia: paso.dia, paso: paso.id, tipo: paso.tipo, opcion: op.id, coste, costeDato: op.coste,
       db: p.bienestar - antes.bienestar, dinero: p.dinero, bienestar: p.bienestar,
@@ -241,6 +263,26 @@
     p.ultimo = r;
     p.fase = 'resultado';
     return r;
+  }
+
+  /* Si no vas en bici, el robo de la bici que estaba por venir se cambia por otro imprevisto
+   * que no haya salido ya (o desaparece si no queda ninguno con precio en la ciudad). */
+  function sinBici(p) {
+    const i = p.pasos.findIndex((x, k) => k > p.cursor && x.tipo === 'imprevisto' && x.id === IMPREVISTO_BICI);
+    if (i < 0) return;
+    const DZ = getDZ();
+    const yaSalen = new Set(p.pasos.map((x) => x.id));
+    const otros = CATALOGO_PEQUENOS.filter((id) => id !== IMPREVISTO_BICI && id !== GORDOS[p.gordo || 'cerrajero']
+      && !yaSalen.has(id) && !DZ.precioImprevisto(id, p.destino).sinDato);
+    const imp = p.imprevistos.find((x) => x.id === IMPREVISTO_BICI);
+    if (!otros.length) {
+      p.pasos.splice(i, 1);
+      p.imprevistos = p.imprevistos.filter((x) => x !== imp);
+      return;
+    }
+    const nuevo = barajar(otros, mulberry32((p.seed ^ 0x5bd1e995) >>> 0))[0];
+    p.pasos[i] = { ...p.pasos[i], id: nuevo };
+    if (imp) imp.id = nuevo;
   }
 
   /* Pasar al siguiente paso. Si el dinero baja de 0 aparece «Sin dinero» (HU-16 esc. 1). */
@@ -328,7 +370,7 @@
   }
 
   return {
-    DIAS, IMPREVISTO_GORDO, CATALOGO_PEQUENOS, SALIDAS, PENALIZACION,
+    DIAS, IMPREVISTO_GORDO, IMPREVISTO_BICI, GORDOS, gordoDe, CATALOGO_PEQUENOS, SALIDAS, PENALIZACION,
     crearPartida, pasoActual, diaActual, opcionesActuales, opcionesDecision, elegir, continuar,
     salidasDisponibles, aplicarSalida, veredicto, encaje, resumen, cifrasPermitidas, mulberry32,
   };
