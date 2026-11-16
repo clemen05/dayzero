@@ -15,6 +15,7 @@
     .then((r) => { if (!r.ok) throw new Error('La API respondió ' + r.status); return r.json(); })
     .then((datos) => { window.DZ_DATA = datos; })
     .then(() => cargar('/js/engine.js'))
+    .then(() => cargar('/js/juego.js'))
     .then(() => cargar('/js/i18n.js'))
     .then(() => cargar('/js/app.js'))
     .catch((e) => {

@@ -361,3 +361,116 @@ footer.foot { color: var(--muted); font: 600 .72rem var(--f-mono); letter-spacin
   table.cost tbody th { width: auto; }
   .steps span:not(.on) { visibility: hidden; }
 }
+
+/* ================= Sprint 2 ================= */
+.top-actions { display: flex; gap: 8px; align-items: center; }
+.toast { position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 30; background: var(--paper); color: var(--paper-ink); font-weight: 700; padding: 12px 18px; border-radius: 14px; box-shadow: 0 20px 40px -16px rgba(0,0,0,.7); max-width: calc(100% - 32px); }
+.danger { background: var(--neg); color: var(--night); border: 0; border-radius: 14px; padding: 13px 20px; font-weight: 700; }
+
+/* HU-29: continuar partida */
+.resume { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 18px 22px; border-radius: var(--r); background: color-mix(in srgb, var(--sodium) 12%, var(--panel)); border: 1px solid color-mix(in srgb, var(--sodium) 45%, transparent); }
+.resume p { margin-top: 4px; }
+.confirm { display: grid; gap: 10px; }
+
+/* HU-27 / HU-28 */
+.grid4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.opt-price { display: flex; align-items: center; gap: 6px; font-size: .82rem; color: var(--muted); font-weight: 600; }
+.opt input:checked + .face .opt-price { color: var(--ink); }
+.opt .face small { font-size: .82rem; }
+.tag-u, .tag-e { display: inline-block; margin-left: 6px; padding: 2px 7px; border-radius: 6px; font: 700 .64rem/1.4 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; vertical-align: middle; }
+.tag-u { background: rgba(69, 224, 160, .16); color: var(--pos); }
+.tag-e { background: rgba(143, 155, 189, .16); color: var(--muted); }
+
+/* HUD y deltas (HU-15) */
+.delta { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px; font: 700 .78rem/1.3 var(--f-mono); vertical-align: middle; }
+.delta.pos { background: rgba(69, 224, 160, .16); color: var(--pos); }
+.delta.neg { background: rgba(255, 107, 107, .16); color: var(--neg); }
+.delta.zero { background: rgba(143, 155, 189, .14); color: var(--muted); }
+.hud .delta { margin-left: 0; justify-self: start; }
+.neg-box { border-color: color-mix(in srgb, var(--neg) 60%, transparent) !important; background: color-mix(in srgb, var(--neg) 10%, var(--panel)) !important; }
+@media (prefers-reduced-motion: no-preference) { .hud .delta { animation: pop .5s cubic-bezier(.2,.8,.2,1); } @keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } } }
+
+/* Línea de los 7 días */
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.timeline li { display: grid; gap: 4px; justify-items: center; text-align: center; padding: 10px 4px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); color: var(--muted); font-size: .72rem; min-width: 0; }
+.timeline li b { font: 800 1rem/1 var(--f-display); }
+.timeline li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.timeline li.done { color: var(--pos); border-color: color-mix(in srgb, var(--pos) 35%, transparent); }
+.timeline li.on { background: var(--sodium); color: var(--sodium-ink); border-color: var(--sodium); }
+@media (max-width: 560px) { .timeline li span { display: none; } }
+.day-head { display: grid; gap: 6px; }
+
+/* Narración (HU-18) */
+.narr { position: relative; background: var(--paper); color: var(--paper-ink); border-radius: 18px; padding: 22px 24px 22px 54px; font: 500 1.02rem/1.6 var(--f-body); max-width: 72ch; box-shadow: 0 24px 50px -30px rgba(0,0,0,.8); }
+.narr::before { content: "“"; position: absolute; left: 18px; top: 6px; font: 800 3rem/1 var(--f-display); color: var(--sodium); }
+.narr.loading p { color: var(--paper-muted); }
+@media (prefers-reduced-motion: no-preference) { .narr.loading p { animation: blink 1.2s ease-in-out infinite; } @keyframes blink { 50% { opacity: .45; } } }
+
+/* Decisiones */
+.decision h2, .outcome h2, .broke h2 { font-size: clamp(1.25rem, 3.2vw, 1.7rem); }
+.eyebrow.alert { color: var(--neg); }
+.hint.warn { color: var(--sodium); font-weight: 600; }
+.choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.choice { display: grid; gap: 10px; align-content: start; padding: 20px; border-radius: 18px; background: var(--night-2); border: 1px solid var(--line); transition: transform .15s, border-color .15s; }
+.choice:hover { transform: translateY(-2px); border-color: var(--sodium); }
+.choice h3 { font-size: 1.02rem; line-height: 1.3; }
+.choice .price { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 28px; }
+.choice .pv { font: 800 1.25rem/1.1 var(--f-display); display: inline-flex; flex-direction: column; }
+.choice .pv .amt-alt { font: 600 .78rem var(--f-body); }
+.choice .pb { font-size: .82rem; color: var(--muted); }
+.choice .primary { justify-content: center; margin-top: auto; }
+.choice.locked { opacity: .45; }
+.choice.locked:hover { transform: none; border-color: var(--line); }
+.primary:disabled, .danger:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+.mode .face svg { width: 34px; height: 34px; }
+
+/* Resultado de cada decisión (HU-13 esc. 3, HU-14 esc. 1) */
+.outcome { border-color: color-mix(in srgb, var(--sodium) 40%, var(--line)); }
+.outcome-row { display: flex; gap: 32px; flex-wrap: wrap; }
+.outcome-v { font: 800 clamp(1.6rem, 4vw, 2.2rem)/1.1 var(--f-display); display: flex; align-items: flex-start; gap: 10px; margin-top: 6px; }
+.outcome-v .amt-alt { font: 600 .85rem var(--f-body); }
+.outcome-v .delta { font-size: 1.1rem; padding: 4px 12px; margin: 0; }
+.big-line { font: 700 clamp(1.05rem, 2.8vw, 1.3rem)/1.35 var(--f-display); }
+
+/* Sin dinero (HU-16) */
+.broke { border-color: color-mix(in srgb, var(--neg) 55%, transparent); background: linear-gradient(180deg, color-mix(in srgb, var(--neg) 12%, var(--panel)), var(--night-2)); }
+
+/* Veredicto (HU-20) */
+.verdict-card { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center; padding: clamp(24px, 5vw, 44px); border-radius: 28px; background: var(--paper); color: var(--paper-ink); box-shadow: 0 40px 80px -40px rgba(0,0,0,.8); }
+.verdict-card .eyebrow { color: var(--paper-muted); }
+.verdict-card h1 { font-size: clamp(2rem, 6vw, 3.4rem); margin-top: 8px; }
+.verdict-card .lead { color: var(--paper-muted); margin-top: 10px; }
+.v-sobreviviste h1 { color: #11895a; } .v-pelos h1 { color: #b06d00; } .v-pudo h1 { color: #d23b3b; }
+.score { position: relative; width: 150px; display: grid; justify-items: center; gap: 6px; }
+.ring { width: 150px; height: 150px; }
+.score-v { position: absolute; top: 0; left: 0; width: 150px; height: 150px; display: grid; place-content: center; text-align: center; }
+.score-v b { font: 800 2.6rem/1 var(--f-display); }
+.score-v span { font: 600 .8rem var(--f-mono); color: var(--paper-muted); }
+.score .lbl { color: var(--paper-muted); text-align: center; }
+@media (max-width: 640px) { .verdict-card { grid-template-columns: 1fr; justify-items: start; } }
+
+/* Informe (HU-21) */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.kpis > div { display: grid; gap: 6px; padding: 16px; border-radius: 16px; background: var(--night-2); border: 1px solid var(--line); }
+.kpis b { font: 800 1.35rem/1.15 var(--f-display); }
+.kpis b .amt-alt { font: 600 .78rem var(--f-body); }
+.daybars { display: grid; gap: 8px; }
+.daybar { display: grid; grid-template-columns: 180px minmax(0, 1fr) 96px; gap: 12px; align-items: center; font-size: .88rem; }
+.daybar .amt { text-align: right; }
+#inf-cambiar .verdict { font-size: clamp(1.1rem, 2.6vw, 1.35rem); line-height: 1.35; }
+.daybar .bar { height: 10px; }
+.daybar .bar i { background: var(--sodium); }
+@media (max-width: 560px) { .daybar { grid-template-columns: minmax(0, 1fr) auto; } .daybar .bar { grid-column: 1 / -1; grid-row: 2; } }
+
+/* Cuenta (HU-22, HU-26) y Mis partidas */
+.cuenta { max-width: 560px; justify-self: center; width: 100%; }
+.sso-row { display: grid; gap: 10px; }
+.sso { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 13px 18px; border-radius: 14px; background: var(--ink); color: var(--night); font-weight: 700; text-decoration: none; border: 1px solid var(--line); }
+.sso svg { width: 20px; height: 20px; }
+.sso:hover { filter: brightness(.95); }
+.sso.off { background: var(--night-2); color: var(--muted); cursor: not-allowed; }
+.sso.off svg { filter: grayscale(1); opacity: .5; }
+.or { text-align: center; color: var(--muted); font-size: .85rem; }
+.games { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.game { display: grid; gap: 6px; padding: 18px; border-radius: 16px; background: var(--night-2); border: 1px solid var(--line); border-left: 4px solid var(--muted); }
+.game.v-sobreviviste { border-left-color: var(--pos); } .game.v-pelos { border-left-color: var(--sodium); } .game.v-pudo { border-left-color: var(--neg); }
