@@ -9,6 +9,7 @@ const TABLAS = [
   'ajuste_nuevo_contrato', 'fianza_legal', 'fiscal_tramo', 'fiscal_parametro', 'quellensteuer',
   'prima_seguro_ch', 'tarifa_transporte', 'cesta_producto', 'precio_cesta', 'permiso_trabajo',
   'tramite', 'coste_arranque', 'gasto_hogar', 'trayecto_zona', 'movilidad', 'council_tax',
+  'imprevisto', 'precio_imprevisto',
 ];
 
 // Algunos textos del dataset vienen con doble codificación UTF-8 («ChamartÃ­n»): se reparan al leer.

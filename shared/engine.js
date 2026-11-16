@@ -352,13 +352,27 @@
     return dato(a.valor_mensual + b.valor_mensual, a.moneda_iso, [ref(a), ref(b)]);
   }
 
-  function costeVida(cityId, perfil, alquilerElegido) {
+  /* HU-27: `reales` = gastos que el usuario ha escrito para esta ciudad, en su moneda
+   * ({ alquiler, transporte, comida, facturas }). Un número sustituye al dato de la base de datos;
+   * un hueco vacío usa el dato de la base de datos y se marca como «estimado». */
+  const DATO_USUARIO = { fuente_id: 'USUARIO', origen_dato: 'usuario', metodo: 'Dato introducido por ti', periodo: null };
+  function conReal(id, base, reales, moneda) {
+    if (!reales) return base;
+    const v = reales[id];
+    if (v != null && v !== '' && Number.isFinite(Number(v)) && Number(v) >= 0) {
+      return dato(Number(v), moneda, [DATO_USUARIO], { usuario: true });
+    }
+    return { ...base, estimado: true };
+  }
+
+  function costeVida(cityId, perfil, alquilerElegido, reales) {
+    const m = ciudad(cityId).moneda_iso;
     const alq = alquilerElegido || alquiler(`${cityId}-00`, perfil.vivienda);
     const partidas = [
-      { id: 'alquiler', d: alq },
-      { id: 'transporte', d: transporte(cityId, perfil.trabajo, perfil.edad) },
-      { id: 'comida', d: comida(cityId) },
-      { id: 'facturas', d: facturas(cityId, perfil.vivienda) },
+      { id: 'alquiler', d: conReal('alquiler', alq, reales, m) },
+      { id: 'transporte', d: conReal('transporte', transporte(cityId, perfil.trabajo, perfil.edad), reales, m) },
+      { id: 'comida', d: conReal('comida', comida(cityId), reales, m) },
+      { id: 'facturas', d: conReal('facturas', facturas(cityId, perfil.vivienda), reales, m) },
     ];
     const sm = seguroMedico(cityId, perfil.edad);
     if (sm) partidas.push({ id: 'seguro_medico', d: sm });
@@ -486,7 +500,7 @@
     const perfil = { vivienda: estado.vivienda, trabajo: estado.trabajo, edad: estado.edad, nacionalidad: estado.nacionalidad };
     const no = sueldo(origen, estado.sueldoActual, opts, fx);
     const nd = sueldo(destino, estado.sueldoOfrecido, opts, fx);
-    const cvo = costeVida(origen, perfil, estado.pisoOrigen);
+    const cvo = costeVida(origen, perfil, estado.pisoOrigen, estado.gastosOrigen || null);
     const cvd = costeVida(destino, perfil, estado.piso ? estado.piso.alquiler : null);
     const mo = ciudad(origen).moneda_iso; const md = ciudad(destino).moneda_iso;
     const quedaO = no.netoMensual == null ? null : no.netoMensual - cvo.total;
@@ -502,6 +516,47 @@
       diferencia, arranque: arr, mesesRecuperar: meses, recupera: meses != null,
       ahorrosLlegan: dineroMudanzaD >= arr.total, dineroMudanzaD,
     };
+  }
+
+  /* HU-21 · Sueldo mínimo en destino con el que el número que duele sería 0.
+   * Si el sueldo ofrecido es bruto, se busca el bruto anual por bisección sobre el motor fiscal;
+   * si es neto, el neto anual necesario sale directo. Devuelve el importe en la moneda del sueldo ofrecido. */
+  function sueldoMinimo(estado, fx = tipos()) {
+    const base = calcular(estado, fx);
+    if (base.diferencia == null) return null;
+    const so = estado.sueldoOfrecido;
+    const md = ciudad(estado.destino).moneda_iso;
+    const necesarioNetoMensualD = base.neto.destino.netoMensual - convertir(base.diferencia, base.mo, md, fx);
+    if (so.tipo === 'neto') {
+      return { tipo: 'neto', importe: convertir(necesarioNetoMensualD * 12, md, so.moneda, fx), moneda: so.moneda };
+    }
+    const dif = (bruto) => calcular({ ...estado, sueldoOfrecido: { ...so, importe: bruto } }, fx).diferencia;
+    let lo = 1; let hi = Math.max(so.importe, 1000);
+    let guard = 0;
+    while (dif(hi) < 0 && guard++ < 40) hi *= 1.5;
+    for (let i = 0; i < 60; i++) { const mid = (lo + hi) / 2; if (dif(mid) < 0) lo = mid; else hi = mid; }
+    return { tipo: 'bruto', importe: hi, moneda: so.moneda };
+  }
+
+  // ---------- Sprint 2 · Precios de imprevistos y de la cesta ----------
+  function precioImprevisto(id, cityId) {
+    const r = (D().precio_imprevisto || []).find((x) => x.imprevisto_id === id && x.ciudad_id === cityId);
+    if (!r) return sinDato(ciudad(cityId).moneda_iso, 'sin_imprevisto');
+    return dato(r.valor, r.moneda_iso, [ref(r)]);
+  }
+  function imprevisto(id) { return (D().imprevisto || []).find((x) => x.imprevisto_id === id); }
+  function precioCesta(pid, cityId) {
+    const r = cesta(cityId, pid);
+    if (!r) return sinDato(ciudad(cityId).moneda_iso, 'sin_precio');
+    return dato(r.precio, r.moneda_iso, [ref(r)]);
+  }
+  function tarifaPor(cityId, re, cond) {
+    const t = tarifa(cityId, re, cond);
+    return t ? dato(t.precio, ciudad(cityId).moneda_iso, [ref(t)], { producto: t.producto }) : sinDato(ciudad(cityId).moneda_iso, 'sin_tarifa');
+  }
+  function kitCasa(cityId) {
+    const r = D().coste_arranque.find((x) => x.concepto === 'kit_ikea_entrada' && x.ciudad_destino_id === cityId);
+    return r ? dato(r.valor, r.moneda_iso, [ref(r)]) : sinDato(ciudad(cityId).moneda_iso, 'sin_kit');
   }
 
   // ---------- HU-25 · Tres pisos reales en la ciudad destino ----------
@@ -526,5 +581,6 @@
     SUPUESTOS, tipos, convertir, convertirDato, ciudad, fuente, esSecundaria,
     netoAnual, sueldo, alquiler, transporte, comida, facturas, seguroMedico, costeVida,
     costeArranque, fianza, visadoYTramites, calcular, opcionesPiso,
+    sueldoMinimo, precioImprevisto, imprevisto, precioCesta, tarifaPor, kitCasa, dato, sinDato,
   };
 });
