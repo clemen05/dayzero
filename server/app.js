@@ -2,12 +2,15 @@
 const express = require('express');
 const path = require('path');
 const DZ = require('../shared/engine.js');
+const { crearAuth } = require('./auth');
+const { narrar } = require('./narrador');
 
-function crearApp(datos) {
+function crearApp(datos, { store } = {}) {
   globalThis.DZ_DATA = datos; // el motor lee los datos de aquí
   const app = express();
   app.disable('x-powered-by');
-  app.use(express.json({ limit: '50kb' }));
+  app.set('trust proxy', 1); // Render y otros hostings van detrás de un proxy HTTPS
+  app.use(express.json({ limit: '200kb' }));
 
   // ---------- API ----------
   const api = express.Router();
@@ -65,11 +68,29 @@ function crearApp(datos) {
     res.json(DZ.opcionesPiso(c, req.query.tipo || '1_dormitorio'));
   });
 
+  // HU-18 / HU-19: narración del día (IA con texto de reserva)
+  api.post('/narrar', async (req, res) => {
+    const b = req.body || {};
+    const dia = Math.min(7, Math.max(1, Number(b.dia) || 1));
+    const c = DZ.ciudad(String(b.destino || ''));
+    if (!c) return res.status(400).json({ error: 'destino no válido' });
+    const lang = b.lang === 'en' ? 'en' : 'es';
+    const r = await narrar({
+      dia, lang, ciudad: lang === 'en' ? c.nombre_en : c.nombre_es,
+      anterior: String(b.anterior || '').slice(0, 120), tema: String(b.tema || '').slice(0, 80),
+      permitidas: Array.isArray(b.permitidas) ? b.permitidas.slice(0, 200).map(String) : [],
+    });
+    res.json(r);
+  });
+
+  if (store) api.use(crearAuth(store).router);
+
   app.use('/api', api);
   app.use('/api', (req, res) => res.status(404).json({ error: 'Ruta de la API no encontrada' }));
 
   // ---------- Web ----------
   app.get('/js/engine.js', (req, res) => res.sendFile(path.join(__dirname, '..', 'shared', 'engine.js')));
+  app.get('/js/juego.js', (req, res) => res.sendFile(path.join(__dirname, '..', 'shared', 'juego.js')));
   app.use(express.static(path.join(__dirname, '..', 'public'), { extensions: ['html'] }));
   app.get('*', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 
